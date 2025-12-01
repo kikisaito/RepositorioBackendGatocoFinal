@@ -1,0 +1,14 @@
+[Unit]
+Description=Ktor Backend Application
+After=network.target
+
+[Service]
+User=deploy
+WorkingDirectory=/home/deploy/app
+ExecStart=/usr/bin/authbind --deep java -jar /home/deploy/app/app.jar
+SuccessExitStatus=143
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
