@@ -35,15 +35,14 @@ jobs:
       - name: Deploy to Server
         uses: easingthemes/ssh-deploy@v5.0.0
         with:
-          # AQUÍ ESTABAN LOS ERRORES DE NOMBRE, YA CORREGIDOS:
-          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           ARGS: "-rlgoDzvc -i"
           SOURCE: "deploy_package/"
-          REMOTE_HOST: ${{ secrets.EC2_HOST }}
-          REMOTE_USER: ${{ secrets.EC2_USERNAME }}
-          TARGET: "/home/${{ secrets.EC2_USERNAME }}/temp_deploy"
+          REMOTE_HOST: ${{ secrets.AWS_HOST }}
+          REMOTE_USER: ${{ secrets.AWS_USERNAME }}
+          TARGET: "/home/${{ secrets.AWS_USERNAME }}/temp_deploy"
           SCRIPT_BEFORE: |
-            mkdir -p /home/${{ secrets.EC2_USERNAME }}/temp_deploy
+            mkdir -p /home/${{ secrets.AWS_USERNAME }}/temp_deploy
           SCRIPT_AFTER: |
             # Move files to final location (assuming deploy user has access or we use sudo)
             # Note: The SSH user might be 'ubuntu', but the app runs as 'deploy'.
@@ -57,16 +56,16 @@ jobs:
             fi
             
             # 2. Move new files
-            sudo mv /home/${{ secrets.EC2_USERNAME }}/temp_deploy/app.jar /home/deploy/app/app.jar
-            sudo mv /home/${{ secrets.EC2_USERNAME }}/temp_deploy/pre-deploy.sh /home/deploy/app/pre-deploy.sh
-            sudo mv /home/${{ secrets.EC2_USERNAME }}/temp_deploy/post-deploy.sh /home/deploy/app/post-deploy.sh
+            sudo mv /home/${{ secrets.AWS_USERNAME }}/temp_deploy/app.jar /home/deploy/app/app.jar
+            sudo mv /home/${{ secrets.AWS_USERNAME }}/temp_deploy/pre-deploy.sh /home/deploy/app/pre-deploy.sh
+            sudo mv /home/${{ secrets.AWS_USERNAME }}/temp_deploy/post-deploy.sh /home/deploy/app/post-deploy.sh
             
             # 3. Update service file
-            sudo mv /home/${{ secrets.EC2_USERNAME }}/temp_deploy/myapp.service /etc/systemd/system/myapp.service
+            sudo mv /home/${{ secrets.AWS_USERNAME }}/temp_deploy/myapp.service /etc/systemd/system/myapp.service
             sudo chown root:root /etc/systemd/system/myapp.service
             
             # 4. Run post-deploy (start service)
             sudo -u deploy /home/deploy/app/post-deploy.sh
             
             # Cleanup
-            rm -rf /home/${{ secrets.EC2_USERNAME }}/temp_deploy
+            rm -rf /home/${{ secrets.AWS_USERNAME }}/temp_deploy
