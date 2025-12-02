@@ -1,4 +1,3 @@
-```
 package com.example
 
 import io.ktor.http.*
@@ -30,4 +29,3 @@ fun Application.configureCORS() {
         allowNonSimpleContentTypes = true
     }
 }
-```
