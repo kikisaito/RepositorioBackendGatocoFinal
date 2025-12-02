@@ -21,7 +21,7 @@ object DatabaseConfig {
         directory = "./" // Buscar en la raíz del proyecto
     }
     
-    private val dbUrl = dotenv["DB_URL"] ?: System.getenv("DB_URL")
+    private val dbUrl = dotenv["DB_URL"] ?: System.getenv("DB_URL") ?: "jdbc:postgresql://54.83.45.10/db_gatoOCOs"
     private val dbUser = dotenv["DB_USER"] ?: System.getenv("DB_USER")
     private val dbPassword = dotenv["DB_PASSWORD"] ?: System.getenv("DB_PASSWORD")
     
