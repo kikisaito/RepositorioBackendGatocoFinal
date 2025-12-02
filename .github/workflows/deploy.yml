@@ -9,63 +9,64 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'corretto'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'corretto'
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-    - name: Build with Gradle
-      run: ./gradlew buildFatJar
+      - name: Build with Gradle
+        run: ./gradlew buildFatJar
 
-    - name: Prepare deployment files
-      run: |
-        mkdir -p deploy_package
-        cp build/libs/*-all.jar deploy_package/app.jar
-        cp deploy/myapp.service deploy_package/
-        cp deploy/pre-deploy.sh deploy_package/
-        cp deploy/post-deploy.sh deploy_package/
-        chmod +x deploy_package/*.sh
+      - name: Prepare deployment files
+        run: |
+          mkdir -p deploy_package
+          cp build/libs/*-all.jar deploy_package/app.jar
+          cp deploy/myapp.service deploy_package/
+          cp deploy/pre-deploy.sh deploy_package/
+          cp deploy/post-deploy.sh deploy_package/
+          chmod +x deploy_package/*.sh
 
-    - name: Deploy to Server
-      uses: easingthemes/ssh-deploy@v5.0.0
-      with:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        ARGS: "-rlgoDzvc -i"
-        SOURCE: "deploy_package/"
-        REMOTE_HOST: ${{ secrets.AWS_HOST }}
-        REMOTE_USER: ${{ secrets.AWS_USERNAME }}
-        TARGET: "/home/${{ secrets.AWS_USERNAME }}/temp_deploy"
-        SCRIPT_BEFORE: |
-          mkdir -p /home/${{ secrets.AWS_USERNAME }}/temp_deploy
-        SCRIPT_AFTER: |
-          # Move files to final location (assuming deploy user has access or we use sudo)
-          # Note: The SSH user might be 'ubuntu', but the app runs as 'deploy'.
-          # We need to move files to /home/deploy/app and update service.
-          
-          echo "Executing deployment on server..."
-          
-          # 1. Run pre-deploy (stop service)
-          if [ -f /home/deploy/app/pre-deploy.sh ]; then
-            sudo -u deploy /home/deploy/app/pre-deploy.sh
-          fi
-
-          # 2. Move new files
-          sudo mv /home/${{ secrets.AWS_USERNAME }}/temp_deploy/app.jar /home/deploy/app/app.jar
-          sudo mv /home/${{ secrets.AWS_USERNAME }}/temp_deploy/pre-deploy.sh /home/deploy/app/pre-deploy.sh
-          sudo mv /home/${{ secrets.AWS_USERNAME }}/temp_deploy/post-deploy.sh /home/deploy/app/post-deploy.sh
-          
-          # 3. Update service file
-          sudo mv /home/${{ secrets.AWS_USERNAME }}/temp_deploy/myapp.service /etc/systemd/system/myapp.service
-          sudo chown root:root /etc/systemd/system/myapp.service
-          
-          # 4. Run post-deploy (start service)
-          sudo -u deploy /home/deploy/app/post-deploy.sh
-          
-          # Cleanup
-          rm -rf /home/${{ secrets.AWS_USERNAME }}/temp_deploy
+      - name: Deploy to Server
+        uses: easingthemes/ssh-deploy@v5.0.0
+        with:
+          # AQUÍ ESTABAN LOS ERRORES DE NOMBRE, YA CORREGIDOS:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          ARGS: "-rlgoDzvc -i"
+          SOURCE: "deploy_package/"
+          REMOTE_HOST: ${{ secrets.EC2_HOST }}
+          REMOTE_USER: ${{ secrets.EC2_USERNAME }}
+          TARGET: "/home/${{ secrets.EC2_USERNAME }}/temp_deploy"
+          SCRIPT_BEFORE: |
+            mkdir -p /home/${{ secrets.EC2_USERNAME }}/temp_deploy
+          SCRIPT_AFTER: |
+            # Move files to final location (assuming deploy user has access or we use sudo)
+            # Note: The SSH user might be 'ubuntu', but the app runs as 'deploy'.
+            # We need to move files to /home/deploy/app and update service.
+            
+            echo "Executing deployment on server..."
+            
+            # 1. Run pre-deploy (stop service)
+            if [ -f /home/deploy/app/pre-deploy.sh ]; then
+              sudo -u deploy /home/deploy/app/pre-deploy.sh
+            fi
+            
+            # 2. Move new files
+            sudo mv /home/${{ secrets.EC2_USERNAME }}/temp_deploy/app.jar /home/deploy/app/app.jar
+            sudo mv /home/${{ secrets.EC2_USERNAME }}/temp_deploy/pre-deploy.sh /home/deploy/app/pre-deploy.sh
+            sudo mv /home/${{ secrets.EC2_USERNAME }}/temp_deploy/post-deploy.sh /home/deploy/app/post-deploy.sh
+            
+            # 3. Update service file
+            sudo mv /home/${{ secrets.EC2_USERNAME }}/temp_deploy/myapp.service /etc/systemd/system/myapp.service
+            sudo chown root:root /etc/systemd/system/myapp.service
+            
+            # 4. Run post-deploy (start service)
+            sudo -u deploy /home/deploy/app/post-deploy.sh
+            
+            # Cleanup
+            rm -rf /home/${{ secrets.EC2_USERNAME }}/temp_deploy
