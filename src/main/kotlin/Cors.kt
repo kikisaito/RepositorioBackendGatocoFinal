@@ -1,33 +1,33 @@
+```
 package com.example
 
-import io.ktor.http.HttpMethod
-import io.ktor.http.HttpHeaders
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.cors.routing.*
 
 fun Application.configureCORS() {
     install(CORS) {
-        // Métodos permitidos (Verbos HTTP)
-        allowMethod(HttpMethod.Options)
-        allowMethod(HttpMethod.Post)
-        allowMethod(HttpMethod.Get)
+        // En lugar de anyHost(), ponemos TU dirección exacta de S3
+        // (Sin la barra / al final)
+        allowHost("gatocofrontendangular.s3-website-us-east-1.amazonaws.com", schemes = listOf("http", "https"))
+        
+        // También dejamos localhost por si quieres probar en tu compu
+        allowHost("localhost:4200")
+        allowHost("localhost:8080")
+
+        allowMethod(HttpMethod.Options) // ¡CRÍTICO!
         allowMethod(HttpMethod.Put)
         allowMethod(HttpMethod.Delete)
         allowMethod(HttpMethod.Patch)
-
-        // Cabeceras permitidas
-        allowHeader(HttpHeaders.ContentType)
+        allowMethod(HttpMethod.Get)
+        allowMethod(HttpMethod.Post)
+        
         allowHeader(HttpHeaders.Authorization)
+        allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.AccessControlAllowOrigin)
-        exposeHeader(HttpHeaders.Authorization)
-
-        // --- EL CAMBIO IMPORTANTE ---
-        // Quitamos "allowHost(localhost)" y ponemos anyHost()
-        // Esto permite que tu S3 (y cualquiera) pueda conectarse.
-        anyHost()
-
-        // Configuración de credenciales
+        
         allowCredentials = true
-        maxAgeInSeconds = 3600
+        allowNonSimpleContentTypes = true
     }
 }
+```
